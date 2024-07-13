@@ -88,8 +88,10 @@ class MSHR(params: InclusiveCacheParameters) extends Module
     val directory = Flipped(Valid(new DirectoryResult(params))) // triggers schedule setup
     val status    = Valid(new MSHRStatus(params))
     val schedule  = Decoupled(new ScheduleRequest(params))
+    // val b1 = Decoupled(new TLBundleB(params.inner.bundle))
     val sinkc     = Flipped(Valid(new SinkCResponse(params)))
     val sinkd     = Flipped(Valid(new SinkDResponse(params)))
+    // val sinkd1     = Valid(new SinkDResponse(params))
     val sinke     = Flipped(Valid(new SinkEResponse(params)))
     val nestedwb  = Flipped(new NestedWriteback(params))
   })
@@ -193,6 +195,14 @@ class MSHR(params: InclusiveCacheParameters) extends Module
                        io.schedule.bits.d.valid || io.schedule.bits.e.valid || io.schedule.bits.x.valid ||
                        io.schedule.bits.dir.valid
 
+  //===== rrunahead: Start ====//
+  // io.b1.bits.hit := io.directory.bits.hit
+  io.schedule.bits.b.bits.hit     := io.directory.bits.hit
+  // io.sinkd.bits.hit     := io.directory.bits.hit
+  io.schedule.bits.d.bits.hit := io.directory.bits.hit
+  // io.b1.ready := false.B
+  //===== rrunahead: End   ====//
+  
   // Schedule completions
   when (io.schedule.ready) {
                                     s_rprobe     := true.B

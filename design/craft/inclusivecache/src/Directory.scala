@@ -25,6 +25,8 @@ import freechips.rocketchip.tilelink._
 import MetaData._
 import chisel3.experimental.dataview.BundleUpcastable
 import freechips.rocketchip.util.DescribedSRAM
+import freechips.rocketchip.subsystem._
+import freechips.rocketchip.subsystem.{BaseSubsystem,  CloneTileAttachParams, TLBusWrapperLocation}
 
 class DirectoryEntry(params: InclusiveCacheParameters) extends InclusiveCacheBundle(params)
 {
@@ -136,6 +138,24 @@ class Directory(params: InclusiveCacheParameters) extends Module
   io.result.bits.viewAsSupertype(chiselTypeOf(bypass.data)) := Mux(hit, Mux1H(hits, ways), Mux(setQuash && (tagMatch || wayMatch), bypass.data, Mux1H(victimWayOH, ways)))
   io.result.bits.hit := hit || (setQuash && tagMatch && bypass.data.state =/= INVALID)
   io.result.bits.way := Mux(hit, OHToUInt(hits), Mux(setQuash && tagMatch, bypass.way, victimWay))
+
+  //===== rrunahead: Start ====//
+
+  // val l2hit = BundleBridgeSource(() => Bool())
+  // l2hit := io.result.bits.hit
+
+// object l2hit{
+//   def attach(subsystem: BaseSubsystem  with HasTileInputConstants)
+//   (implicit p: Parameters){
+
+//     val ins_counter = BundleBridgeSink[UInt]()
+//     ins_counter := subsystem.ins_outtile
+//   }
+
+    // val ins_counter = BundleBridgeSink[UInt]()
+    // ins_counter := ins_outtile
+// }
+  //===== rrunahead: End   ====//
 
   params.ccover(ren2 && setQuash && tagMatch, "DIRECTORY_HIT_BYPASS", "Bypassing write to a directory hit")
   params.ccover(ren2 && setQuash && !tagMatch && wayMatch, "DIRECTORY_EVICT_BYPASS", "Bypassing a write to a directory eviction")

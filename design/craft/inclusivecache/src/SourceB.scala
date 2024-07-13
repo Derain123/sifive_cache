@@ -28,6 +28,7 @@ class SourceBRequest(params: InclusiveCacheParameters) extends InclusiveCacheBun
   val tag     = UInt(params.tagBits.W)
   val set     = UInt(params.setBits.W)
   val clients = UInt(params.clientBits.W)
+  val hit     = Bool()
 }
 
 class SourceB(params: InclusiveCacheParameters) extends Module
@@ -81,5 +82,8 @@ class SourceB(params: InclusiveCacheParameters) extends Module
     b.bits.mask    := ~0.U(params.inner.manager.beatBytes.W)
     b.bits.data    := 0.U
     b.bits.corrupt := false.B
+  //rrunahead_start
+    b.bits.hit := io.req.bits.hit
+  //rrunahead_end
   }
 }

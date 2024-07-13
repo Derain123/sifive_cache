@@ -25,6 +25,7 @@ import freechips.rocketchip.tilelink._
 import sifive.blocks.inclusivecache._
 import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.util._
+import chisel3._
 
 case class InclusiveCacheParams(
   ways: Int,
@@ -42,6 +43,24 @@ case class InclusiveCacheParams(
   bufOuterExterior: InclusiveCachePortParameters = InclusiveCachePortParameters.none)
 
 case object InclusiveCacheKey extends Field[InclusiveCacheParams]
+
+  //===== rrunahead: Start ====//
+
+  // val l2hit = BundleBridgeSource(() => Bool())
+  // l2hit := io.result.bits.hit
+
+object l2hit{
+//   def attach(subsystem: BaseSubsystem  with HasTileInputConstants)
+//   (implicit p: Parameters){
+
+//     val ins_counter = BundleBridgeSink[UInt]()
+//     ins_counter := subsystem.ins_outtile
+//   }
+
+    // val ins_counter = Some(BundleBridgeSink[UInt](Some(() => UInt(40.W))))
+    // ins_counter := ins_outtile
+}
+  //===== rrunahead: End   ====//
 
 class WithInclusiveCache(
   nWays: Int = 8,

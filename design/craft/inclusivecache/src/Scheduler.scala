@@ -23,6 +23,11 @@ import chisel3.util._
 import freechips.rocketchip.diplomacy.AddressSet
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.util._
+import freechips.rocketchip.subsystem.{BaseSubsystem, HierarchicalLocation, HasTiles}
+import freechips.rocketchip.subsystem.{BaseSubsystem, SystemBus}
+import freechips.rocketchip.prci.{ClockSinkDomain}
+import org.chipsalliance.cde.config.{Field, Parameters}
+import freechips.rocketchip.diplomacy._
 
 class InclusiveCacheBankScheduler(params: InclusiveCacheParameters) extends Module
 {
@@ -148,6 +153,30 @@ class InclusiveCacheBankScheduler(params: InclusiveCacheParameters) extends Modu
 
   directory.io.write.valid := schedule.dir.valid
   directory.io.write.bits.viewAsSupertype(chiselTypeOf(schedule.dir.bits)) := schedule.dir.bits
+
+  //===== rrunahead: Start ====//
+  // sourceB.io.b.bits.hit := schedule.b.hit
+  // io.out.b.bits.hit := sourceB.io.b.bits.hit
+  sourceB.io.req.bits.hit := c_mshr.io.schedule.bits.b.bits.hit
+  sourceD.io.req.bits.hit := c_mshr.io.schedule.bits.d.bits.hit
+  // sinkD.io.resp.bits.hit := c_mshr.io.sinkd1.bits.hit
+  c_mshr.io.sinkd.bits.hit := sinkD.io.resp.bits.hit
+  // sinkD.io.resp.bits.hit := sourceD.io.req.bits.hit
+  // io.out.b.bits.hit := true.B
+
+  // def attach(subsystem: BaseSubsystem with HasTiles)
+  // (implicit p: Parameters){
+  //   val l2_hit = BundleBridgeSink[UInt]()
+  //   l2_hit.bundle := c_mshr.io.schedule.bits.b.bits.hit
+  //   // subsystem.ins_outtile_hit := l2_hit
+  //   l2_hit := subsystem.ins_outtile_hit
+  // }
+
+  // val l2_hit = BundleBridgeSource[UInt](Bool())
+  // l2_hit.get.bundle := c_mshr.io.schedule.bits.b.bits.hit
+
+
+  //===== rrunahead: End   ====//
 
   // Forward meta-data changes from nested transaction completion
   val select_c  = mshr_selectOH(params.mshrs-1)
@@ -350,3 +379,26 @@ class InclusiveCacheBankScheduler(params: InclusiveCacheParameters) extends Modu
   private def simple = s""""reset":"${reset.pathName}","tagBits":[${tagBits}],"setBits":[${setBits}],"blockBytes":${params.cache.blockBytes},"ways":${params.cache.ways}"""
   def json: String = s"""{"addresses":[${addresses}],${simple},"directory":${directory.json},"subbanks":${bankedStore.json}}"""
 }
+
+//===== rrunahead: Start ====//
+
+case class L2hitParams(
+  number_of_little_cores: Int,
+  width_GH_packet: Int
+)
+
+case class L2hitLocated(loc: HierarchicalLocation) extends Field[Option[L2hitParams]](None)
+
+object L2hit {
+
+    def attach(params: L2hitParams, subsystem: BaseSubsystem with HasTiles)
+              (implicit p: Parameters){
+    //===== rrunahead: Start ====//
+      val ins_counter_hit = BundleBridgeSink[UInt]()
+      ins_counter_hit := subsystem.ins_outtile_hit
+    //===== rrunahead: End ====//
+
+    }
+}
+
+//===== rrunahead: Start ====//

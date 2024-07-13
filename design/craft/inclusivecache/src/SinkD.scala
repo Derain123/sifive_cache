@@ -29,6 +29,7 @@ class SinkDResponse(params: InclusiveCacheParameters) extends InclusiveCacheBund
   val source = UInt(params.outer.bundle.sourceBits.W)
   val sink   = UInt(params.outer.bundle.sinkBits.W)
   val denied = Bool()
+  val hit = Bool()
 }
 
 class SinkD(params: InclusiveCacheParameters) extends Module
@@ -71,6 +72,7 @@ class SinkD(params: InclusiveCacheParameters) extends Module
   io.resp.bits.source := d.bits.source
   io.resp.bits.sink   := d.bits.sink
   io.resp.bits.denied := d.bits.denied
+  io.resp.bits.hit := d.bits.hit
 
   io.bs_adr.bits.noop := !d.valid || !hasData
   io.bs_adr.bits.way  := io.way
